@@ -58,9 +58,11 @@ def get_weather(query):
     if parsed.get('weather'):
         weather ={'description':parsed['weather'][0]['description'],
         'temperature':parsed['main']['temp'],
-        'city':parsed['name']
+        'city':parsed['name'],
+        'country': parsed['sys']['country']
         }
     return weather
+
 
 if __name__ == "__main__":
     app.run(port=5000, debug=True)
