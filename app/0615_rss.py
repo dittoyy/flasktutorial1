@@ -24,44 +24,43 @@ def favicon():
 DEFAULTS = {'publication':'bbc',
 'city': 'London,UK'}
 @app.route("/")
-def get_news():
-    query = request.args.get("publication")
+def home():
+    # get customized headlines, based on user input or default
+    publication = request.args.get('publication')
+    if not publication:
+        publication = DEFAULTS['publication']
+    articles = get_news(publication)
+    # get customized weather based on user input or default
+    city = request.args.get('city')
+    if not city:
+        city = DEFAULTS['city']
+    weather = get_weather(city)
+    return render_template("home.html", articles=articles,
+    weather=weather)
+
+def get_news(query):
+    # query = request.args.get("publication")
     if not query or query.lower() not in RSS_FEEDS:
-        publication = "bbc"
+        publication = DEFAULTS["publication"]
     else:
         publication = query.lower()
     feed = feedparser.parse(RSS_FEEDS[publication])
-    weather = get_weather("London,UK")#weather
-    return render_template("home.html",
-        articles=feed['entries'],
-        weather=weather)
+    # weather = get_weather("London,UK")#weather
+    return feed['entries']
 # @app.route("/")
 def get_weather(query):
-    api_url = 'http://api.openweathermap.org/data/2.5/weather?q={}&units=metric&appid=12b2817fbec86915a6e9b4dbbd3d9036'
+    WEATHER_URL='http://api.openweathermap.org/data/2.5/weather?q={}&units=metric&appid=12b2817fbec86915a6e9b4dbbd3d9036'
     query = urllib.quote(query)
-    url = api_url.format(query)
+    url = WEATHER_URL.format(query)
     data = urllib2.urlopen(url).read()
     parsed = json.loads(data)
-    # weather=None
-    weather = {'description': parsed['weather'][0]['description'],
-                'temperature': parsed['main']['temp'],
-                'city': parsed['name'],
-                'country': parsed['sys']['country']
-                }
-    # WEATHER_URL ="http://api.openweathermap.org/data/2.5/weather?q={}&units=metric&APPID=12b2817fbec86915a6e9b4dbbd3d9036"
-    # CURRENCY_URL ="https://openexchangerates.org//api/latest.json?app_id=12b2817fbec86915a6e9b4dbbd3d9036"
-    if parsed.get("weather"):
-        weather = {"description":
-            parsed["weather"][0]["description"],
-            "temperature":parsed["main"]["temp"],
-            "city":parsed["name"]
-            }
+    weather = None
+    if parsed.get('weather'):
+        weather ={'description':parsed['weather'][0]['description'],
+        'temperature':parsed['main']['temp'],
+        'city':parsed['name']
+        }
     return weather
-# def get_rate(frm, to):
-#     all_currency = urllib2.urlopen(CURRENCY_URL).read()
-#     parsed = json.loads(all_currency).get('rates')
-#     frm_rate = parsed.get(frm.upper())
-#     to_rate = parsed.get(to.upper())
-#     return to_rate/frm_rate
+
 if __name__ == "__main__":
     app.run(port=5000, debug=True)
